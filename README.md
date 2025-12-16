@@ -1,3 +1,17 @@
+"""
+Generic Flow Index - Requirements from December 5th, 2025
+
+Purpose: Aggregate basic statistics across multiple products showing summed 
+USD-equivalent notional/aggregated maturity by date across all products.
+
+Requirements:
+- Product types: Swaps to fixed, Swaps to floating, Pre-issuance swaps, XCCY swaps, Caps, Swaptions
+- Filters: (a) Bilateral/XXXX/Off-SEF, (b) new trades, (c) at least one USD leg
+- Key variables: Currencies, Notional, Effective Date, Maturity Date, Tenor, Expiration Date, Date/Time
+- Focus: Aggregated statistics on notional and maturity across all products
+- Minimal filtering to get the big picture
+"""
+
 import re
 import time
 import warnings
@@ -201,7 +215,7 @@ def get_usd_notional_with_source(row: pd.Series):
 
 def classify_product(row: pd.Series) -> str:
     """
-    Classify products per Alex's requirements:
+    Classify products per requirements:
     - Swaps to fixed (IRS with fixed rate)
     - Swaps to floating (IRS without fixed rate)
     - Pre-issuance swaps (forward starting)
@@ -246,15 +260,15 @@ def classify_product(row: pd.Series) -> str:
     
     # Classification hierarchy (per email priorities)
     
-    # 1. XCCY (easiest to ID per Alex)
+    # 1. XCCY (easiest to ID per email)
     if is_xccy or re.search(r'\bXCCY\b|\bCCS\b|\bCROSS.?CURRENCY\b', text):
         return "XCCY"
     
-    # 2. Caps (easiest to ID per Alex)
+    # 2. Caps (easiest to ID per email)
     if re.search(r'\bCAP\b', text):
         return "CAP"
     
-    # 3. Swaptions (easiest to ID per Alex)
+    # 3. Swaptions (easiest to ID per email)
     if re.search(r'\bSWAPTION\b|\bOPTION\b', text):
         return "SWAPTION"
     
@@ -317,7 +331,7 @@ def get_fixed_rate_with_source(row: pd.Series):
 @timer_func
 def load_and_filter_csv(csv_path: str, start_date: str, end_date: str) -> pd.DataFrame:
     """
-    Load flows.csv and apply minimal filters per Alex's requirements:
+    Load flows.csv and apply minimal filters per requirements:
     (a) Bilateral/XXXX/Off-SEF trades
     (b) New trades
     (c) At least one leg in USD
@@ -377,7 +391,7 @@ def load_and_filter_csv(csv_path: str, start_date: str, end_date: str) -> pd.Dat
 
 def enrich_and_classify(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Add key variables per Alex's requirements:
+    Add key variables per requirements:
     - Currencies of the leg(s)
     - Notional (USD-equivalent for XCCY)
     - Effective Date
@@ -473,7 +487,7 @@ def enrich_and_classify(df: pd.DataFrame) -> pd.DataFrame:
 def aggregate_daily_all(df: pd.DataFrame) -> pd.DataFrame:
     """
     Daily aggregation across all products.
-    Focus: notional and maturity (tenor) per Alex's requirement.
+    Focus: notional and maturity (tenor) per requirements.
     
     Outputs:
     - USD Notional Sum
@@ -580,7 +594,7 @@ def write_excel(out_path: str, trades_df: pd.DataFrame,
 def build_generic_flow_index(csv_path: str, excel_out_path: str,
                             start_date: str, end_date: str):
     """
-    Main pipeline per Alex Zempolich's requirements (12/5/2025).
+    Main pipeline per requirements from December 5th, 2025.
     
     Creates generic flow index showing:
     - Summed USD-equivalent notional by date
@@ -591,7 +605,7 @@ def build_generic_flow_index(csv_path: str, excel_out_path: str,
                    XCCY, Caps, Swaptions
     """
     print("=" * 70)
-    print("GENERIC FLOW INDEX - Building per Alex's Requirements")
+    print("GENERIC FLOW INDEX - Building per Requirements")
     print("=" * 70)
     
     # Load and filter
@@ -674,4 +688,4 @@ if __name__ == "__main__":
         excel_out_path=EXCEL_OUT_PATH,
         start_date=START_DATE,
         end_date=END_DATE
-    )
+    )****
