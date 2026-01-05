@@ -1,0 +1,69 @@
+Sub PopulatePDRNumbers()
+    Dim wbMICL As Workbook
+    Dim wbDFI As Workbook
+    Dim wsMICL As Worksheet
+    Dim wsDFI As Worksheet
+    Dim lastRowMICL As Long
+    Dim lastRowDFI As Long
+    Dim i As Long, j As Long
+    Dim bankName As String
+    Dim found As Boolean
+    
+    ' Set the MICL workbook (this file)
+    Set wbMICL = ThisWorkbook
+    Set wsMICL = wbMICL.Sheets("Inventory Checklist #2")
+    
+    ' Open DFI Master 3 file
+    Dim filePath As String
+    filePath = Application.GetOpenFilename("Excel Files (*.xlsx; *.xlsm), *.xlsx; *.xlsm", , "Select DFI Master 3 File")
+    If filePath = "False" Then 
+        MsgBox "No file selected. Operation cancelled.", vbExclamation
+        Exit Sub
+    End If
+    
+    Set wbDFI = Workbooks.Open(filePath)
+    Set wsDFI = wbDFI.Sheets("IRM Nov")
+    
+    ' Find last rows
+    lastRowMICL = wsMICL.Cells(wsMICL.Rows.Count, "A").End(xlUp).Row
+    lastRowDFI = wsDFI.Cells(wsDFI.Rows.Count, "A").End(xlUp).Row
+    
+    ' Loop through MICL banks
+    Dim matchCount As Integer
+    Dim notFoundCount As Integer
+    matchCount = 0
+    notFoundCount = 0
+    
+    For i = 2 To lastRowMICL ' Assuming row 1 is headers
+        bankName = Trim(wsMICL.Cells(i, 1).Value) ' Column A has bank names in MICL
+        
+        If bankName <> "" Then
+            found = False
+            
+            ' Search in DFI Master - Column A for bank names
+            For j = 2 To lastRowDFI
+                If Trim(wsDFI.Cells(j, 1).Value) = bankName Then
+                    ' Found match - pull from Column B (IRM PDR)
+                    wsMICL.Cells(i, 2).Value = wsDFI.Cells(j, 2).Value
+                    found = True
+                    matchCount = matchCount + 1
+                    Exit For
+                End If
+            Next j
+            
+            If Not found Then
+                wsMICL.Cells(i, 2).Value = "Not Found"
+                notFoundCount = notFoundCount + 1
+            End If
+        End If
+    Next i
+    
+    ' Close DFI Master
+    wbDFI.Close SaveChanges:=False
+    
+    ' Summary message
+    MsgBox "PDR Numbers populated successfully!" & vbCrLf & vbCrLf & _
+           "Matches found: " & matchCount & vbCrLf & _
+           "Not found: " & notFoundCount & vbCrLf & _
+           "Total processed: " & (lastRowMICL - 1), vbInformation, "Complete"
+End Sub
