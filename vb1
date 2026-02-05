@@ -1,0 +1,90 @@
+Sub CreateEmailFromLists()
+    Dim OutlookApp As Object
+    Dim OutlookMail As Object
+    Dim ws As Worksheet
+    Dim toList As String
+    Dim ccList As String
+    Dim toCol As Long
+    Dim ccCol As Long
+    Dim lastRow As Long
+    Dim i As Long
+    Dim cellValue As String
+    
+    ' Set the worksheet (adjust sheet name if needed)
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' Change to your actual sheet name
+    
+    ' Find the columns for "Full To List" and "Full CC List"
+    ' Adjust these column numbers based on your actual layout
+    toCol = 0
+    ccCol = 0
+    
+    ' Search for column headers in row 1
+    For i = 1 To ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        If InStr(1, ws.Cells(1, i).Value, "Full To List", vbTextCompare) > 0 Then
+            toCol = i
+        ElseIf InStr(1, ws.Cells(1, i).Value, "Full CC List", vbTextCompare) > 0 Then
+            ccCol = i
+        End If
+    Next i
+    
+    ' Check if columns were found
+    If toCol = 0 Or ccCol = 0 Then
+        MsgBox "Could not find 'Full To List' or 'Full CC List' columns. Please check column headers.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Find the last row with data
+    lastRow = ws.Cells(ws.Rows.Count, toCol).End(xlUp).Row
+    
+    ' Collect email addresses from "Full To List"
+    toList = ""
+    For i = 2 To lastRow ' Start from row 2 to skip header
+        cellValue = Trim(ws.Cells(i, toCol).Value)
+        If cellValue <> "" Then
+            If toList = "" Then
+                toList = cellValue
+            Else
+                toList = toList & "; " & cellValue
+            End If
+        End If
+    Next i
+    
+    ' Collect email addresses from "Full CC List"
+    ccList = ""
+    For i = 2 To lastRow
+        cellValue = Trim(ws.Cells(i, ccCol).Value)
+        If cellValue <> "" Then
+            If ccList = "" Then
+                ccList = cellValue
+            Else
+                ccList = ccList & "; " & cellValue
+            End If
+        End If
+    Next i
+    
+    ' Create Outlook application object
+    On Error Resume Next
+    Set OutlookApp = GetObject(, "Outlook.Application")
+    If OutlookApp Is Nothing Then
+        Set OutlookApp = CreateObject("Outlook.Application")
+    End If
+    On Error GoTo 0
+    
+    ' Create new email
+    Set OutlookMail = OutlookApp.CreateItem(0) ' 0 = olMailItem
+    
+    With OutlookMail
+        .To = toList
+        .CC = ccList
+        .Subject = "Trade Confirmation" ' Change as needed
+        .Body = "" ' Add body text if needed
+        .Display ' Use .Display to show the email, or .Send to send automatically
+    End With
+    
+    ' Clean up
+    Set OutlookMail = Nothing
+    Set OutlookApp = Nothing
+    
+    MsgBox "Email draft created successfully!", vbInformation
+    
+End Sub
