@@ -1,0 +1,14 @@
+Sub RefreshAPIData()
+    On Error GoTo ErrorHandler
+    
+    ' Refresh only Query1
+    ThisWorkbook.Queries("Query1").Refresh
+    
+    ' Optional: Show success message
+    ' MsgBox "Data refreshed successfully!", vbInformation
+    
+    Exit Sub
+    
+ErrorHandler:
+    MsgBox "Error refreshing data: " & Err.Description, vbExclamation
+End Sub
